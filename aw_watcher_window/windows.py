@@ -6,7 +6,7 @@ import win32api
 import win32gui
 import win32process
 import wmi
-
+import ctypes
 
 def get_app_path(hwnd) -> Optional[str]:
     """Get application path given hwnd."""
@@ -23,6 +23,16 @@ def get_app_path(hwnd) -> Optional[str]:
         win32api.CloseHandle(process)
 
     return path
+
+
+def get_file_path(hwnd) -> Optional[str]:
+    """Get directory of the file associated with the window given hwnd."""
+    file_path = get_app_path(hwnd)
+
+    if file_path is None:
+        return None
+
+    return os.path.dirname(file_path)
 
 
 def get_app_name(hwnd) -> Optional[str]:
@@ -42,7 +52,6 @@ def get_window_title(hwnd):
 def get_active_window_handle():
     hwnd = win32gui.GetForegroundWindow()
     return hwnd
-
 
 # WMI-version, used as fallback if win32gui/win32process/win32api fails (such as for "run as admin" processes)
 

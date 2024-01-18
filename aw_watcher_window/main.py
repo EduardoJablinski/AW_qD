@@ -32,14 +32,14 @@ def kill_process(pid):
 
 def main():
     args = parse_args()
-    
+
     if sys.platform.startswith("linux") and (
         "DISPLAY" not in os.environ or not os.environ["DISPLAY"]
     ):
         raise Exception("DISPLAY environment variable not set")
 
     setup_logging(
-        name="aw-watcher-window",
+        name="aw-watcher-window-quattrod",
         testing=args.testing,
         verbose=args.verbose,
         log_stderr=True,
@@ -47,7 +47,7 @@ def main():
     )
 
     client = ActivityWatchClient(
-        "aw-watcher-window", host=args.host, port=args.port, testing=args.testing
+        "aw-watcher-window-quattrod", host=args.host, port=args.port, testing=args.testing
     )
 
     bucket_id = f"{client.client_name}_{client.client_hostname}"
@@ -55,7 +55,7 @@ def main():
 
     client.create_bucket(bucket_id, event_type, queued=True)
 
-    logger.info("aw-watcher-window started")
+    logger.info("aw-watcher-window-quattrod started")
 
     sleep(1)  # wait for server to start
     with client:

@@ -7,8 +7,10 @@ default_config = """
 exclude_title = false
 poll_time = 1.0
 strategy_macos = "swift"
+regex = [
+  { nome = "", padrao = "" },
+]
 """.strip()
-
 
 def load_config():
     return load_config_toml("aw-watcher-window-quattrod", default_config)["aw-watcher-window-quattrod"]
