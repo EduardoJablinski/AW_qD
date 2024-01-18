@@ -3,7 +3,7 @@ from typing import Optional
 
 from .exceptions import FatalError
 
-def get_current_window() -> Optional[dict]:
+def get_current_window_windows() -> Optional[dict]:
     from . import windows
 
     window_handle = windows.get_active_window_handle()
@@ -29,3 +29,13 @@ def get_current_window() -> Optional[dict]:
         path = "unknown"
 
     return {"app": app, "title": title, "path": path}
+
+def get_current_window(strategy: Optional[str] = None) -> Optional[dict]:
+    """
+    :raises FatalError: if a fatal error occurs (e.g. unsupported platform, X server closed)
+    """
+
+    if sys.platform in ["win32", "cygwin"]:
+        return get_current_window_windows()
+    else:
+        raise FatalError(f"Unknown platform: {sys.platform}")

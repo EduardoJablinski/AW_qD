@@ -32,6 +32,11 @@ def kill_process(pid):
 
 def main():
     args = parse_args()
+    
+    if sys.platform.startswith("linux") and (
+        "DISPLAY" not in os.environ or not os.environ["DISPLAY"]
+    ):
+        raise Exception("DISPLAY environment variable not set")
 
     setup_logging(
         name="aw-watcher-window",
@@ -58,11 +63,12 @@ def main():
             client,
             bucket_id,
             poll_time=args.poll_time,
+            strategy=args.strategy,
             exclude_title=args.exclude_title,
         )
 
 
-def heartbeat_loop(client, bucket_id, poll_time, exclude_title=False):
+def heartbeat_loop(client, bucket_id, poll_time, strategy, exclude_title=False):
     while True:
         if os.getppid() == 1:
             logger.info("window-watcher stopped because parent process died")
@@ -70,7 +76,7 @@ def heartbeat_loop(client, bucket_id, poll_time, exclude_title=False):
 
         current_window = None
         try:
-            current_window = get_current_window
+            current_window = get_current_window(strategy)
             logger.debug(current_window)
         except (FatalError, OSError):
             # Fatal exceptions should quit the program
