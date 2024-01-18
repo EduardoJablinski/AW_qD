@@ -3,7 +3,7 @@ import argparse
 from aw_core.config import load_config_toml
 
 default_config = """
-[aw-watcher-window]
+[aw-watcher-window-quattrod]
 exclude_title = false
 poll_time = 1.0
 strategy_macos = "swift"
@@ -11,7 +11,7 @@ strategy_macos = "swift"
 
 
 def load_config():
-    return load_config_toml("aw-watcher-window", default_config)["aw-watcher-window"]
+    return load_config_toml("aw-watcher-window-quattrod", default_config)["aw-watcher-window-quattrod"]
 
 
 def parse_args():
