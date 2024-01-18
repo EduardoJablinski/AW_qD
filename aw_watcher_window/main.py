@@ -13,7 +13,6 @@ from aw_core.models import Event
 from .config import parse_args
 from .exceptions import FatalError
 from .lib import get_current_window
-from .macos_permissions import background_ensure_permissions
 
 logger = logging.getLogger(__name__)
 
@@ -34,24 +33,16 @@ def kill_process(pid):
 def main():
     args = parse_args()
 
-    if sys.platform.startswith("linux") and (
-        "DISPLAY" not in os.environ or not os.environ["DISPLAY"]
-    ):
-        raise Exception("DISPLAY environment variable not set")
-
     setup_logging(
-        name="aw-watcher-window",
+        name="aw-watcher-window-quattrod",
         testing=args.testing,
         verbose=args.verbose,
         log_stderr=True,
         log_file=True,
     )
 
-    if sys.platform == "darwin":
-        background_ensure_permissions()
-
     client = ActivityWatchClient(
-        "aw-watcher-window", host=args.host, port=args.port, testing=args.testing
+        "aw-watcher-window-quattrod", host=args.host, port=args.port, testing=args.testing
     )
 
     bucket_id = f"{client.client_name}_{client.client_hostname}"
@@ -59,43 +50,19 @@ def main():
 
     client.create_bucket(bucket_id, event_type, queued=True)
 
-    logger.info("aw-watcher-window started")
+    logger.info("aw-watcher-window-quattrod started")
 
     sleep(1)  # wait for server to start
     with client:
-        if sys.platform == "darwin" and args.strategy == "swift":
-            logger.info("Using swift strategy, calling out to swift binary")
-            binpath = os.path.join(
-                os.path.dirname(os.path.realpath(__file__)), "aw-watcher-window-macos"
-            )
-
-            try:
-                p = subprocess.Popen(
-                    [
-                        binpath,
-                        client.server_address,
-                        bucket_id,
-                        client.client_hostname,
-                        client.client_name,
-                    ]
-                )
-                # terminate swift process when this process dies
-                signal.signal(signal.SIGTERM, lambda *_: kill_process(p.pid))
-                p.wait()
-            except KeyboardInterrupt:
-                print("KeyboardInterrupt")
-                kill_process(p.pid)
-        else:
-            heartbeat_loop(
-                client,
-                bucket_id,
-                poll_time=args.poll_time,
-                strategy=args.strategy,
-                exclude_title=args.exclude_title,
-            )
+        heartbeat_loop(
+            client,
+            bucket_id,
+            poll_time=args.poll_time,
+            exclude_title=args.exclude_title,
+        )
 
 
-def heartbeat_loop(client, bucket_id, poll_time, strategy, exclude_title=False):
+def heartbeat_loop(client, bucket_id, poll_time, exclude_title=False):
     while True:
         if os.getppid() == 1:
             logger.info("window-watcher stopped because parent process died")
@@ -103,7 +70,7 @@ def heartbeat_loop(client, bucket_id, poll_time, strategy, exclude_title=False):
 
         current_window = None
         try:
-            current_window = get_current_window(strategy)
+            current_window = get_current_window
             logger.debug(current_window)
         except (FatalError, OSError):
             # Fatal exceptions should quit the program
