@@ -1,7 +1,11 @@
 import os
 import time
 from typing import Optional
+from inspect import getsourcefile
+from os.path import abspath
+from pywinauto.application import Application
 
+import pywinauto
 import win32api
 import win32gui
 import win32process
@@ -23,17 +27,6 @@ def get_app_path(hwnd) -> Optional[str]:
         win32api.CloseHandle(process)
 
     return path
-
-
-def get_file_path(hwnd) -> Optional[str]:
-    """Get directory of the file associated with the window given hwnd."""
-    file_path = get_app_path(hwnd)
-
-    if file_path is None:
-        return None
-
-    return os.path.dirname(file_path)
-
 
 def get_app_name(hwnd) -> Optional[str]:
     """Get application filename given hwnd."""

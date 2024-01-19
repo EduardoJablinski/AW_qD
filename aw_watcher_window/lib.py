@@ -6,7 +6,7 @@ from .exceptions import FatalError
 
 def get_current_window_windows() -> Optional[dict]:
     from . import windows
-    from . import regex as regex_module  # Renomeie a variável para evitar conflito
+    from . import regex as regex_module  
 
     window_handle = windows.get_active_window_handle()
     try:
@@ -22,8 +22,6 @@ def get_current_window_windows() -> Optional[dict]:
     except Exception:  
         # try with wmi method
         path = windows.get_app_path_wmi(window_handle)
-
-    file_path = windows.get_file_path(window_handle)
     
     regex_result = regex_module.regex(title) 
     
@@ -33,10 +31,8 @@ def get_current_window_windows() -> Optional[dict]:
         title = "unknown"
     if path is None:
         path = "unknown"
-    if file_path is None:
-        file_path = "unknown"
 
-    return {"app": app, "title": title, "app_path": path, "file_path": file_path, "regex": regex_result}
+    return {"app": app, "title": title, "app_path": path, "regex": regex_result}
 
 def get_current_window(strategy: Optional[str] = None) -> Optional[dict]:
     """
