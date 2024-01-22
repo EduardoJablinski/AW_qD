@@ -1,3 +1,4 @@
+import multiprocessing
 import logging
 import os
 import signal
@@ -5,10 +6,16 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 from time import sleep
-
+from flask import Flask, request, render_template
+from datetime import datetime
+import threading
+import time
 from aw_client import ActivityWatchClient
 from aw_core.log import setup_logging
 from aw_core.models import Event
+from multiprocessing import Queue
+from flask import jsonify
+
 
 from .config import parse_args
 from .exceptions import FatalError
@@ -29,6 +36,13 @@ def kill_process(pid):
     except ProcessLookupError:
         logger.info("Process {} already dead".format(pid))
 
+app = Flask(__name__)
+
+def create_data_dict(name_value):
+    return {"title": name_value}
+
+def run_flask(client):
+    app.run(port=5700, debug=False)  # Run the Flask app in the new process
 
 def main():
     args = parse_args()
@@ -57,7 +71,11 @@ def main():
 
     logger.info("aw-watcher-window-quattrod started")
 
-    sleep(1)  # wait for server to start
+    flask_thread = threading.Thread(target=run_flask, args=(client,))
+    flask_thread.start()
+
+
+    sleep(1)  # wait for the server to start
     with client:
         heartbeat_loop(
             client,
@@ -67,6 +85,9 @@ def main():
             exclude_title=args.exclude_title,
         )
 
+
+
+import time
 
 def heartbeat_loop(client, bucket_id, poll_time, strategy, exclude_title=False):
     while True:
@@ -114,4 +135,34 @@ def heartbeat_loop(client, bucket_id, poll_time, strategy, exclude_title=False):
                 bucket_id, current_window_event, pulsetime=poll_time + 1.0, queued=True
             )
 
-        sleep(poll_time)
+        sleep(poll_time)        
+        
+@app.route('/manual_input', methods=['GET', 'POST'])
+def manual_input():
+    client = request.args.get('client')  # Obter o objeto client da solicitação
+    if request.method == 'POST':
+        # Obtenha os dados do formulário enviado
+        date_value = request.form.get('date')
+        time_value = request.form.get('time')
+        end_time = request.form.get('endTime')
+        name_value = request.form.get('title')
+
+        start_datetime = datetime.strptime(f"{date_value} {time_value}", "%Y-%m-%d %H:%M")
+        start_datetime_utc = start_datetime.astimezone(timezone.utc)
+        print(start_datetime_utc)
+        end_datetime = datetime.strptime(f"{date_value} {end_time}", "%Y-%m-%d %H:%M")
+        duration_in_seconds = int((end_datetime - start_datetime).total_seconds())
+
+        data_dict = create_data_dict(name_value)
+
+        # Criar um objeto Event com os dados do formulário
+        manual_input_event = Event(timestamp=start_datetime_utc, duration=duration_in_seconds, data=data_dict)
+        print(manual_input_event)
+        # Enviar o evento para o servidor ActivityWatch
+        try:
+            client.heartbeat(bucket_id, manual_input_event, pulsetime=10, queued=True)
+        except Exception as e:
+            # Lide com erros ao enviar o evento (substitua conforme necessário)
+            return jsonify({"error": str(e)})
+
+    return render_template('manual_input.html')

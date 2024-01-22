@@ -1,0 +1,55 @@
+<!-- manual_input.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual Input</title>
+    <script>
+        function confirmSubmission() {
+            // Obtém os valores dos campos
+            var dateValue = document.getElementById('date').value;
+            var startTimeValue = document.getElementById('time').value;
+            var endTimeValue = document.getElementById('endTime').value;
+            var titleValue = document.getElementById('title').value;
+
+
+            // Constrói a mensagem de confirmação com os valores dos campos
+            var confirmationMessage = "Você tem certeza de que deseja enviar os seguintes dados?\n\n";
+            confirmationMessage += "Data: " + dateValue + "\n";
+            confirmationMessage += "Horário Inicial: " + startTimeValue + "\n";
+            confirmationMessage += "Horário Final: " + endTimeValue + "\n";
+            confirmationMessage += "Título: " + titleValue + "\n";
+
+            // Exibe uma mensagem de confirmação e retorna verdadeiro se o usuário clicar em OK
+            var confirmed = confirm(confirmationMessage);
+
+            // Se o usuário confirmou, envie o formulário
+            if (confirmed) {
+                document.getElementById('manualInputForm').submit();
+            }
+
+            return confirmed;
+        }
+    </script>
+</head>
+<body>
+    <h1>Manual Input Form</h1>
+    <form id="manualInputForm" method="POST" onsubmit="return confirmSubmission()">
+        <label for="date">Data:</label>
+        <input type="date" name="date" id="date" required>
+
+        <label for="time">Horário Inicial:</label>
+        <input type="time" name="time" id="time" required>
+
+        <label for="endTime">Horário Final:</label>
+        <input type="time" name="endTime" id="endTime" required>
+
+        <label for="title">Título:</label>
+        <input type="text" name="title" id="title" required>
+
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>
