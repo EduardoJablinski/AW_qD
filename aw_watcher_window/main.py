@@ -22,6 +22,7 @@ from .exceptions import FatalError
 from .lib import get_current_window
 
 logger = logging.getLogger(__name__)
+manual_input_queue = Queue()
 
 # run with LOG_LEVEL=DEBUG
 log_level = os.environ.get("LOG_LEVEL")
@@ -41,8 +42,8 @@ app = Flask(__name__)
 def create_data_dict(name_value):
     return {"title": name_value}
 
-def run_flask(client):
-    app.run(port=5700, debug=False)  # Run the Flask app in the new process
+def run_flask():
+    app.run(port=5700, debug=False)
 
 def main():
     args = parse_args()
@@ -71,7 +72,7 @@ def main():
 
     logger.info("aw-watcher-window-quattrod started")
 
-    flask_thread = threading.Thread(target=run_flask, args=(client,))
+    flask_thread = threading.Thread(target=run_flask)
     flask_thread.start()
 
 
@@ -92,8 +93,13 @@ import time
 def heartbeat_loop(client, bucket_id, poll_time, strategy, exclude_title=False):
     while True:
         if os.getppid() == 1:
-            logger.info("window-watcher stopped because parent process died")
+            logger.info("window-watcher stopped because the parent process died")
             break
+
+        # Check for manual input
+        if not manual_input_queue.empty():
+            manual_input_event = manual_input_queue.get()
+            client.heartbeat(bucket_id, manual_input_event, pulsetime=1.0, queued=True)
 
         current_window = None
         try:
@@ -120,7 +126,7 @@ def heartbeat_loop(client, bucket_id, poll_time, strategy, exclude_title=False):
                 break
 
         if current_window is None:
-            logger.debug("Unable to fetch window, trying again on next poll")
+            logger.debug("Unable to fetch window, trying again on the next poll")
         else:
             if exclude_title:
                 current_window["title"] = "excluded"
@@ -128,18 +134,14 @@ def heartbeat_loop(client, bucket_id, poll_time, strategy, exclude_title=False):
             now = datetime.now(timezone.utc)
             current_window_event = Event(timestamp=now, data=current_window)
 
-            # Set pulsetime to 1 second more than the poll_time
-            # This since the loop takes more time than poll_time
-            # due to sleep(poll_time).
             client.heartbeat(
                 bucket_id, current_window_event, pulsetime=poll_time + 1.0, queued=True
             )
 
-        sleep(poll_time)        
+        sleep(poll_time)
         
 @app.route('/manual_input', methods=['GET', 'POST'])
 def manual_input():
-    client = request.args.get('client')  # Obter o objeto client da solicitação
     if request.method == 'POST':
         # Obtenha os dados do formulário enviado
         date_value = request.form.get('date')
@@ -157,12 +159,7 @@ def manual_input():
 
         # Criar um objeto Event com os dados do formulário
         manual_input_event = Event(timestamp=start_datetime_utc, duration=duration_in_seconds, data=data_dict)
-        print(manual_input_event)
-        # Enviar o evento para o servidor ActivityWatch
-        try:
-            client.heartbeat(bucket_id, manual_input_event, pulsetime=10, queued=True)
-        except Exception as e:
-            # Lide com erros ao enviar o evento (substitua conforme necessário)
-            return jsonify({"error": str(e)})
+        manual_input_queue.put(manual_input_event)
+        print(manual_input_queue)
 
     return render_template('manual_input.html')
