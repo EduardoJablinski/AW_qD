@@ -30,6 +30,12 @@ def aplicar_regex(texto, regras):
         return ', '.join(resultados)
     elif assign_last_value and lista_regex:
         assign_last_value = False
+        last_value = lista_regex[-1]
+        if last_value:
+            return f"{last_value} (***)"
+        else:
+            return "Regex não encontrado"
+    elif lista_regex:
         return lista_regex[-1]
     else:
         return "Regex não encontrado"
@@ -37,7 +43,7 @@ def aplicar_regex(texto, regras):
 def regex(texto):
     regras = carregar_regras()
     regex_result = aplicar_regex(texto, regras)
-    #print(f"Título: {texto}, Resultado: {regex_result}")
+    print(f"Título: {texto}, Resultado: {regex_result}")
     lista_regex.append(regex_result)
     #print(f"Lista: {teste}")
     return regex_result
