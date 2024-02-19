@@ -1,11 +1,61 @@
-<!-- manual_input.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manual Input</title>
+    <title>Input de Atividades - ActivityWatch</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="date"],
+        input[type="time"],
+        input[type="text"],
+        button[type="submit"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        button[type="submit"] {
+            background-color: #db4141;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #42b300;
+        }
+    </style>
     <script>
         function confirmSubmission() {
             // Obtém os valores dos campos
@@ -35,21 +85,27 @@
     </script>
 </head>
 <body>
-    <h1>Manual Input Form</h1>
-    <form id="manualInputForm" method="POST" onsubmit="return confirmSubmission()">
-        <label for="date">Data:</label>
-        <input type="date" name="date" id="date" required>
+    <div class="container">
+        <h1>Input de Atividades ActivityWatch</h1>
+        <form id="manualInputForm" method="POST" onsubmit="return confirmSubmission()">
+            <label for="date">Data:</label>
+            <input type="date" name="date" id="date" required>
 
-        <label for="time">Horário Inicial:</label>
-        <input type="time" name="time" id="time" required>
+            <label for="time">Horário Inicial:</label>
+            <input type="time" name="time" id="time" required>
 
-        <label for="endTime">Horário Final:</label>
-        <input type="time" name="endTime" id="endTime" required>
+            <label for="endTime">Horário Final:</label>
+            <input type="time" name="endTime" id="endTime" required>
 
-        <label for="title">Título:</label>
-        <input type="text" name="title" id="title" required>
+            <label for="title">Título:</label>
+            <input type="text" name="title" id="title" required>
 
-        <button type="submit">Submit</button>
-    </form>
+            <button type="submit">Enviar</button>
+
+            <label for="response-container">Resposta do Request:</label>
+            <pre>{{ response_data | tojson | safe }}</pre>
+        </form>
+    </div>
+
 </body>
 </html>

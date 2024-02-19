@@ -1,20 +1,17 @@
-import multiprocessing
 import logging
 import os
 import signal
-import subprocess
 import sys
 from datetime import datetime, timezone
 from time import sleep
 from flask import Flask, request, render_template
-from datetime import datetime
 import threading
-import time
 from aw_client import ActivityWatchClient
 from aw_core.log import setup_logging
 from aw_core.models import Event
 from multiprocessing import Queue
 from flask import jsonify
+import requests
 
 
 from .config import parse_args
@@ -43,7 +40,7 @@ def create_data_dict(name_value):
     return {"title": name_value}
 
 def run_flask():
-    app.run(port=5700, debug=False)
+    app.run(port=5000, debug=False)
 
 def main():
     args = parse_args()
@@ -142,6 +139,7 @@ def heartbeat_loop(client, bucket_id, poll_time, strategy, exclude_title=False):
         
 @app.route('/manual_input', methods=['GET', 'POST'])
 def manual_input():
+    response_data = None
     if request.method == 'POST':
         # Obtenha os dados do formulário enviado
         date_value = request.form.get('date')
@@ -151,15 +149,33 @@ def manual_input():
 
         start_datetime = datetime.strptime(f"{date_value} {time_value}", "%Y-%m-%d %H:%M")
         start_datetime_utc = start_datetime.astimezone(timezone.utc)
-        print(start_datetime_utc)
+
         end_datetime = datetime.strptime(f"{date_value} {end_time}", "%Y-%m-%d %H:%M")
+        end_datetime_utc = end_datetime.astimezone(timezone.utc)
+
         duration_in_seconds = int((end_datetime - start_datetime).total_seconds())
 
         data_dict = create_data_dict(name_value)
 
-        # Criar um objeto Event com os dados do formulário
-        manual_input_event = Event(timestamp=start_datetime_utc, duration=duration_in_seconds, data=data_dict)
-        manual_input_queue.put(manual_input_event)
-        print(manual_input_queue)
+        # Construa a URL com os parâmetros de data e hora
+        url = f"http://localhost:5600/api/0/buckets/aw-watcher-window-quattrod_qDWS-25/events"
+        params = {
+            'start': start_datetime_utc.strftime("%Y-%m-%d %H:%M:%S%z"),
+            'end': end_datetime_utc.strftime("%Y-%m-%d %H:%M:%S%z")
+        }
+        
+        # Faça a solicitação GET usando requests
+        response = requests.get(url, headers={'accept': 'application/json'}, params=params)
+        print(response)
+        if response.status_code == 200:
+            # Processar a resposta
+            response_data = response.json()
+            #print(response_data)
 
-    return render_template('manual_input.html')
+            if not response_data:
+                # Coloque manual_input_event na queue
+                manual_input_event = Event(timestamp=start_datetime_utc, duration=duration_in_seconds, data=data_dict)
+                manual_input_queue.put(manual_input_event)
+                #print(manual_input_queue)
+
+    return render_template('manual_input.html', response_data=response_data)

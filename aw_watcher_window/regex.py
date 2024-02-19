@@ -43,7 +43,7 @@ def aplicar_regex(texto, regras):
 def regex(texto):
     regras = carregar_regras()
     regex_result = aplicar_regex(texto, regras)
-    print(f"Título: {texto}, Resultado: {regex_result}")
+    #print(f"Título: {texto}, Resultado: {regex_result}")
     lista_regex.append(regex_result)
     #print(f"Lista: {teste}")
     return regex_result
