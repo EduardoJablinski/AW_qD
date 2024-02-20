@@ -140,6 +140,7 @@ def heartbeat_loop(client, bucket_id, poll_time, strategy, exclude_title=False):
 @app.route('/manual_input', methods=['GET', 'POST'])
 def manual_input():
     response_data = None
+    message = None
     if request.method == 'POST':
         # Obtenha os dados do formulário enviado
         date_value = request.form.get('date')
@@ -170,12 +171,14 @@ def manual_input():
         if response.status_code == 200:
             # Processar a resposta
             response_data = response.json()
+            message = "Existem eventos no período selecionado."
             #print(response_data)
 
             if not response_data:
                 # Coloque manual_input_event na queue
                 manual_input_event = Event(timestamp=start_datetime_utc, duration=duration_in_seconds, data=data_dict)
                 manual_input_queue.put(manual_input_event)
+                message = "Evento adicionado no ActivityWatch!"
                 #print(manual_input_queue)
 
-    return render_template('manual_input.html', response_data=response_data)
+    return render_template('manual_input.html', response_data=response_data, message=message)

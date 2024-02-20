@@ -22,6 +22,12 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
+        .scrollable-response {
+            height: 80px; /* Adjust height as needed */
+            overflow-y: auto; /* Enable vertical scrolling */
+        }
+
+
         h1 {
             text-align: center;
         }
@@ -90,22 +96,27 @@
         <form id="manualInputForm" method="POST" onsubmit="return confirmSubmission()">
             <label for="date">Data:</label>
             <input type="date" name="date" id="date" required>
-
+        
             <label for="time">Horário Inicial:</label>
             <input type="time" name="time" id="time" required>
-
+        
             <label for="endTime">Horário Final:</label>
             <input type="time" name="endTime" id="endTime" required>
-
+        
             <label for="title">Título:</label>
             <input type="text" name="title" id="title" required>
-
+        
             <button type="submit">Enviar</button>
-
+        
             <label for="response-container">Resposta do Request:</label>
-            <pre>{{ response_data | tojson | safe }}</pre>
+            <p>{{ message }}</p>
+            {% if response_data %}
+            <div class="scrollable-response">
+                <pre>{{ response_data | tojson | safe }}</pre>
+            </div>  
+            {% endif %}
         </form>
     </div>
-
 </body>
+
 </html>
