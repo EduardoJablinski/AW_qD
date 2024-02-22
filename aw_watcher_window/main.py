@@ -51,7 +51,7 @@ def main():
         raise Exception("DISPLAY environment variable not set")
 
     setup_logging(
-        name="aw-watcher-window-quattrod",
+        name="aw-watcher-window",
         testing=args.testing,
         verbose=args.verbose,
         log_stderr=True,
@@ -59,7 +59,7 @@ def main():
     )
 
     client = ActivityWatchClient(
-        "aw-watcher-window-quattrod", host=args.host, port=args.port, testing=args.testing
+        "aw-watcher-window", host=args.host, port=args.port, testing=args.testing
     )
 
     bucket_id = f"{client.client_name}_{client.client_hostname}"
@@ -67,7 +67,7 @@ def main():
 
     client.create_bucket(bucket_id, event_type, queued=True)
 
-    logger.info("aw-watcher-window-quattrod started")
+    logger.info("aw-watcher-window started")
 
     flask_thread = threading.Thread(target=run_flask)
     flask_thread.start()
@@ -157,9 +157,9 @@ def manual_input():
         duration_in_seconds = int((end_datetime - start_datetime).total_seconds())
 
         data_dict = create_data_dict(name_value)
-
+#Substituir ID do usuário
         # Construa a URL com os parâmetros de data e hora
-        url = f"http://localhost:5600/api/0/buckets/aw-watcher-window-quattrod_qDWS-25/events"
+        url = f"http://localhost:5600/api/0/buckets/aw-watcher-window_{id}/events"
         params = {
             'start': start_datetime_utc.strftime("%Y-%m-%d %H:%M:%S%z"),
             'end': end_datetime_utc.strftime("%Y-%m-%d %H:%M:%S%z")
