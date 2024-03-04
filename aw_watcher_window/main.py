@@ -26,6 +26,8 @@ log_level = os.environ.get("LOG_LEVEL")
 if log_level:
     logger.setLevel(logging.__getattribute__(log_level.upper()))
 
+# Global variable to store bucket_id
+global_bucket_id = None
 
 def kill_process(pid):
     logger.info("Killing process {}".format(pid))
@@ -43,6 +45,7 @@ def run_flask():
     app.run(port=5000, debug=False)
 
 def main():
+    global global_bucket_id  # Accessing the global variable
     args = parse_args()
 
     if sys.platform.startswith("linux") and (
@@ -66,12 +69,14 @@ def main():
     event_type = "currentwindow"
 
     client.create_bucket(bucket_id, event_type, queued=True)
+    
+    # Assigning bucket_id to global variable
+    global_bucket_id = bucket_id
 
     logger.info("aw-watcher-window started")
 
     flask_thread = threading.Thread(target=run_flask)
     flask_thread.start()
-
 
     sleep(1)  # wait for the server to start
     with client:
@@ -82,8 +87,6 @@ def main():
             strategy=args.strategy,
             exclude_title=args.exclude_title,
         )
-
-
 
 import time
 
@@ -101,6 +104,8 @@ def heartbeat_loop(client, bucket_id, poll_time, strategy, exclude_title=False):
         current_window = None
         try:
             current_window = get_current_window(strategy)
+            print("Heartbeat")
+            print(bucket_id)
             logger.debug(current_window)
         except (FatalError, OSError):
             # Fatal exceptions should quit the program
@@ -139,6 +144,7 @@ def heartbeat_loop(client, bucket_id, poll_time, strategy, exclude_title=False):
         
 @app.route('/manual_input', methods=['GET', 'POST'])
 def manual_input():
+    global global_bucket_id  # Accessing the global variable
     response_data = None
     message = None
     if request.method == 'POST':
@@ -157,9 +163,9 @@ def manual_input():
         duration_in_seconds = int((end_datetime - start_datetime).total_seconds())
 
         data_dict = create_data_dict(name_value)
-#Substituir ID do usuário
+
         # Construa a URL com os parâmetros de data e hora
-        url = f"http://localhost:5600/api/0/buckets/aw-watcher-window_{id}/events"
+        url = f"http://localhost:5600/api/0/buckets/{global_bucket_id}/events"
         params = {
             'start': start_datetime_utc.strftime("%Y-%m-%d %H:%M:%S%z"),
             'end': end_datetime_utc.strftime("%Y-%m-%d %H:%M:%S%z")
@@ -172,13 +178,11 @@ def manual_input():
             # Processar a resposta
             response_data = response.json()
             message = "Existem eventos no período selecionado."
-            #print(response_data)
 
             if not response_data:
                 # Coloque manual_input_event na queue
                 manual_input_event = Event(timestamp=start_datetime_utc, duration=duration_in_seconds, data=data_dict)
                 manual_input_queue.put(manual_input_event)
                 message = "Evento adicionado no ActivityWatch!"
-                #print(manual_input_queue)
 
     return render_template('manual_input.html', response_data=response_data, message=message)
